@@ -48,6 +48,41 @@ class Tracker:
             except Exception:
                 pass
 
+    def validate_run(self, state: GameState):
+        errors = []
+
+        event_lines = (
+            self.clears[1]
+            + self.clears[2] * 2
+            + self.clears[3] * 3
+            + self.clears[4] * 4
+        )
+
+        if event_lines != state.lines:
+            errors.append(
+                f"line mismatch: events={event_lines}, final={state.lines}"
+            )
+
+        if state.score < 0:
+            errors.append(
+                f"invalid score: {state.score}"
+            )
+
+        if state.lines < 0:
+            errors.append(
+                f"invalid lines: {state.lines}"
+            )
+
+        if state.level < 0:
+            errors.append(
+                f"invalid level: {state.level}"
+            )
+
+        if errors:
+            return "warning", "; ".join(errors)
+
+        return "valid", None
+
     def collector_reports_top_out(self, state: GameState) -> bool:
         fn = getattr(self.collector, "is_top_out", None)
         return bool(fn(state)) if callable(fn) else False
@@ -83,11 +118,15 @@ class Tracker:
             state,
         )
 
+        validation_status, validation_error = self.validate_run(state)
+
         is_pb = self.storage.finish_run(
             run_id,
             _now(),
             state,
             self.clears,
+            validation_status,
+            validation_error,            
         )
 
         self.log(

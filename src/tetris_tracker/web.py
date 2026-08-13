@@ -54,6 +54,8 @@ SELECT
     r.end_level,
     r.final_lines,
     r.tetrises,
+    r.validation_status,
+    r.validation_error,    
     r.started_at,
     r.ended_at,
     CAST(
@@ -142,6 +144,16 @@ def rows_html(rows, ranked):
             row["final_lines"],
         )
 
+        status = row["validation_status"]
+
+        if status == "valid":
+            status_html = '<span class="valid">✓ OK</span>'
+        elif status == "warning":
+            error = html.escape(row["validation_error"] or "Validation warning")
+            status_html = f'<span class="warning" title="{error}">⚠ CHECK</span>'
+        else:
+            status_html = '<span class="unknown">—</span>'
+
         result.append(
             f"""
             <tr>
@@ -154,6 +166,7 @@ def rows_html(rows, ranked):
                 <td>{rate:.1f}%</td>
                 <td>{fmt_duration(row["game_seconds"])}</td>
                 <td>{html.escape(fmt_date(row["ended_at"]))}</td>
+                <td>{status_html}</td>
             </tr>
             """
         )
@@ -176,6 +189,7 @@ def render_table(rows, ranked):
                     <th>Tetris %</th>
                     <th>Game Time</th>
                     <th>Date</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -431,6 +445,19 @@ def render(db):
             color: var(--muted);
         }}
 
+        .valid {{
+            color: var(--nord14);
+            font-weight: 900;
+        }}
+
+        .warning {{
+            color: var(--nord13);
+            font-weight: 900;
+        }}
+
+        .unknown {{
+            color: var(--muted);
+        }}
         footer {{
             margin-top: 28px;
             color: var(--muted);

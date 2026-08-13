@@ -42,7 +42,10 @@ CREATE TABLE IF NOT EXISTS runs (
     tetrises INTEGER NOT NULL DEFAULT 0,
 
     status TEXT NOT NULL DEFAULT 'active',
-    synced_at TEXT
+    synced_at TEXT,
+
+    validation_status TEXT,
+    validation_error TEXT    
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -245,6 +248,8 @@ class Storage:
         ended_at: str,
         state: GameState,
         clears: dict[int, int],
+        validation_status: str,
+        validation_error: str | None,        
     ) -> bool:
         previous_best = self.best_score_before_run(run_id, state)
 
@@ -259,7 +264,9 @@ class Storage:
                 doubles=?,
                 triples=?,
                 tetrises=?,
-                status='completed'
+                status='completed',
+                validation_status=?,
+                validation_error=?                
             WHERE id=?
             """,
             (
@@ -271,6 +278,8 @@ class Storage:
                 clears.get(2, 0),
                 clears.get(3, 0),
                 clears.get(4, 0),
+                validation_status,
+                validation_error,                
                 run_id,
             ),
         )

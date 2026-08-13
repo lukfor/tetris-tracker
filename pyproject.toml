@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tetris-tracker"
+version = "0.8.0"
+description = "Extensible classic Tetris training tracker"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+tetris-tracker = "tetris_tracker.cli:main"
+
+[project.entry-points."tetris_tracker.collectors"]
+nes-retroarch = "tetris_tracker.collectors.nes_retroarch:NesRetroArchCollector"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS players (
 
 CREATE TABLE IF NOT EXISTS runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_uuid TEXT NOT NULL UNIQUE,
     player_id INTEGER NOT NULL REFERENCES players(id),
 
     platform TEXT NOT NULL,
@@ -39,7 +41,8 @@ CREATE TABLE IF NOT EXISTS runs (
     triples INTEGER NOT NULL DEFAULT 0,
     tetrises INTEGER NOT NULL DEFAULT 0,
 
-    status TEXT NOT NULL DEFAULT 'active'
+    status TEXT NOT NULL DEFAULT 'active',
+    synced_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -135,11 +138,12 @@ class Storage:
         cur = self.conn.execute(
             """
             INSERT INTO runs (
-                player_id, platform, game, version, source,
+                run_uuid, player_id, platform, game, version, source,
                 started_at, start_level, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
             """,
             (
+                str(uuid.uuid4()),
                 self.default_player_id,
                 state.platform,
                 state.game,

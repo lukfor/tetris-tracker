@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "example-tetris-collector"
 version = "0.1.0"
-requires-python = ">=3.10"
+requires-python = ">=3.7"
 dependencies = ["tetris-tracker"]
 
 [project.entry-points."tetris_tracker.collectors"]

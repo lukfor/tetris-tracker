@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import socket
+from typing import Optional, List
 
 
 class RetroArchClient:
@@ -9,7 +10,7 @@ class RetroArchClient:
         self.port = port
         self.timeout = timeout
 
-    def command(self, command: str, expect_response: bool = True) -> str | None:
+    def command(self, command: str, expect_response: bool = True) -> Optional[str]:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.settimeout(self.timeout)
             sock.sendto(command.encode("ascii"), (self.host, self.port))
@@ -26,7 +27,7 @@ class RetroArchClient:
 
         return data.decode("ascii").strip()
 
-    def read_memory(self, address: int, length: int = 1) -> list[int]:
+    def read_memory(self, address: int, length: int = 1) -> List[int]:
         response = self.command(
             f"READ_CORE_MEMORY {address:04X} {length}"
         )

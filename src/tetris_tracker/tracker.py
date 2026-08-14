@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
+from typing import Optional
 
 from tetris_tracker.models import GameState
 from tetris_tracker.storage import Storage
@@ -24,8 +25,8 @@ class Tracker:
         self.poll_interval = poll_interval
         self.verbose = verbose
 
-        self.run_id: int | None = None
-        self.last_state: GameState | None = None
+        self.run_id: Optional[int] = None
+        self.last_state: Optional[GameState] = None
         self.clears = {1: 0, 2: 0, 3: 0, 4: 0}
 
         # Start: require a few consecutive gameplay samples.

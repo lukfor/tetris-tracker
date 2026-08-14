@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import List, Optional
+
 from tetris_tracker.models import GameState
 from tetris_tracker.plugin import CollectorConfig
 from tetris_tracker.retroarch import RetroArchClient
@@ -27,7 +29,7 @@ def _bcd_byte(value: int) -> int:
     return ((value >> 4) * 10) + (value & 0x0F)
 
 
-def _decode_bcd_le(values: list[int]) -> int:
+def _decode_bcd_le(values: List[int]) -> int:
     result = 0
     multiplier = 1
 
@@ -52,7 +54,7 @@ class NesRetroArchCollector:
             timeout=float(config.options.get("timeout", 1.0)),
         )
 
-    def read_state(self) -> GameState | None:
+    def read_state(self) -> Optional[GameState]:
         try:
             block = self.client.read_memory(
                 RAM_BLOCK_START,

@@ -4,7 +4,7 @@ import json
 import sqlite3
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 
 from tetris_tracker.models import GameState
 
@@ -218,7 +218,7 @@ class Storage:
         )
         self.conn.commit()
 
-    def best_score_before_run(self, run_id: int, state: GameState) -> int | None:
+    def best_score_before_run(self, run_id: int, state: GameState) -> Optional[int]:
         row = self.conn.execute(
             """
             SELECT MAX(final_score)
@@ -247,9 +247,9 @@ class Storage:
         run_id: int,
         ended_at: str,
         state: GameState,
-        clears: dict[int, int],
+        clears: Dict[int, int],
         validation_status: str,
-        validation_error: str | None,        
+        validation_error: Optional[str],        
     ) -> bool:
         previous_best = self.best_score_before_run(run_id, state)
 

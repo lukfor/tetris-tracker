@@ -15,7 +15,7 @@ def rows_html(rows, ranked):
     if not rows:
         return """
         <tr>
-            <td colspan="11" class="empty">
+            <td colspan="12" class="empty">
                 No completed games yet.
             </td>
         </tr>
@@ -60,6 +60,10 @@ def rows_html(rows, ranked):
             score=fmt_score(row["final_score"]),
         )
 
+        version = html.escape(
+            str(row["version"] or "—").upper()
+        )
+
         result.append(
             """
             <tr>
@@ -73,11 +77,13 @@ def rows_html(rows, ranked):
                 <td>{rate:.1f}%</td>
                 <td>{duration}</td>
                 <td>{date}</td>
+                <td>{version}</td>
                 <td>{status}</td>
             </tr>
             """.format(
                 rank=rank,
                 score=score_html,
+                version=version,
                 spl=spl,
                 start_level=row["start_level"],
                 end_level=row["end_level"],
@@ -109,6 +115,7 @@ def render_table(rows, ranked):
                     <th>Tetris %</th>
                     <th>Game Time</th>
                     <th>Date</th>
+                    <th>Version</th>
                     <th>Status</th>
                 </tr>
             </thead>

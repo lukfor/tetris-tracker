@@ -49,3 +49,6 @@ class RetroArchClient:
         # SHOW_MSG is fire-and-forget; RetroArch does not need to reply.
         safe = " ".join(str(message).replace("\n", " ").split())
         self.command(f"SHOW_MSG {safe}", expect_response=False)
+
+    def get_status(self) -> str:
+        return self.command("GET_STATUS")

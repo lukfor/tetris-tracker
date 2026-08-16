@@ -16,6 +16,7 @@ SELECT
     r.validation_error,
     r.started_at,
     r.ended_at,
+    r.version,    
     CAST(
         ROUND(
             (julianday(r.ended_at) - julianday(r.started_at))

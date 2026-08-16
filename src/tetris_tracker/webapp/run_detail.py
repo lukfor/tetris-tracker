@@ -145,12 +145,25 @@ def render(db, run_id):
     body = """
     <a class="back-link" href="/">← Dashboard</a>
 
-    <div class="run-title">
-        <h2>Run #{run_id}</h2>
-        <h2 class="run-score">{score}</h2>
+    <div class="run-hero">
+        <div class="label">RUN #{run_id}</div>
+        <div class="run-score" style="
+            font-size: 48px;
+            line-height: 1.05;
+            font-weight: 800;
+            color: var(--nord13);
+            margin-top: 8px;
+            letter-spacing: -1px;
+        ">{score}</div>
+        <div class="muted" style="
+            margin-top: 8px;
+            font-size: 15px;
+        ">
+            Level {start_level} → {end_level} · {tetrises} Tetrises
+        </div>
     </div>
 
-    <div class="cards">
+    <div class="cards" style="margin-top: 22px;">
         <div class="card">
             <div class="label">Score / Line</div>
             <div class="value">{spl:,.0f}</div>

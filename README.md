@@ -1,193 +1,362 @@
-# tetris-tracker
+# Tetris Tracker
 
-Small extensible Tetris training logger.
+Tetris Tracker turns classic NES Tetris sessions into training data.
 
-## Install locally
+It runs alongside RetroArch, reads the game state through RetroArch Network Commands and automatically records your games while you play.
+
+No modified ROM is required and there is nothing to enter manually.
+
+**Just play Tetris.**
+
+The tracker records data such as:
+
+- score
+- lines
+- start and end level
+- Tetrises
+- Tetris rate
+- game time
+- gameplay events
+- personal bests
+
+A built-in web dashboard provides an overview of your training and detailed visualizations of individual runs.
+
+## Screenshots
+
+### Training dashboard
+
+Overview of recorded games, personal bests and training statistics.
+
+![Tetris Tracker dashboard](docs/screenshots/dashboard.png)
+
+### Run details
+
+Inspect individual games with score and line progression, Tetris events and level transitions over time.
+
+![Tetris Tracker run details](docs/screenshots/run-detail.png)
+
+## RetroPie installation
+
+Tetris Tracker is designed to run directly on a Raspberry Pi alongside RetroPie and RetroArch.
+
+### 1. Fix the legacy Raspberry Pi package repository
+
+On older RetroPie installations the original Raspbian repository may no longer be available.
+
+Replace it with the legacy repository:
 
 ```bash
-cd tetris-tracker
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
+sudo sed -i 's#raspbian.raspberrypi.org#legacy.raspbian.org#' /etc/apt/sources.list
 ```
 
-Enable RetroArch Network Commands:
+Then update the package lists:
+
+```bash
+sudo apt-get update
+```
+
+Make sure Python, pip and Git are installed:
+
+```bash
+sudo apt-get install -y python3 python3-pip git
+```
+
+### 2. Update pip
+
+RetroPie installations often ship with an older pip version.
+
+Install a Python 3.7 compatible pip version for the current user:
+
+```bash
+python3 -m pip install --user --upgrade "pip<24.1"
+```
+
+Make sure the local Python binary directory is in your `PATH`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+You can add this line to `~/.bashrc` if necessary.
+
+### 3. Clone Tetris Tracker
+
+```bash
+cd ~
+git clone https://github.com/lukfor/tetris-tracker.git
+cd tetris-tracker
+```
+
+Install it:
+
+```bash
+python3 -m pip install --user .
+```
+
+For development you can instead use an editable installation:
+
+```bash
+python3 -m pip install --user -e .
+```
+
+### 4. Enable RetroArch Network Commands
+
+Tetris Tracker communicates with RetroArch through its Network Command interface.
+
+Enable it in the RetroArch configuration:
 
 ```ini
 network_cmd_enable = "true"
 network_cmd_port = "55355"
 ```
 
-Run the built-in NES Tetris collector:
+The built-in NES collector uses `READ_CORE_MEMORY` to read the running game state.
+
+### 5. Test the tracker
+
+Start NES Tetris in RetroArch and run:
 
 ```bash
-tetris-tracker --host 127.0.0.1 --port 55355 nes-retroarch
+tetris-tracker \
+    --db ~/tetris-tracker/tetris.db \
+    --host 127.0.0.1 \
+    --port 55355 \
+    nes-retroarch
 ```
 
-Choose a database:
+When gameplay starts, the tracker should display a RetroArch notification:
+
+```text
+Tetris Tracker: Tracking started
+```
+
+After a completed game the run is written to the SQLite database.
+
+### 6. Test the web dashboard
+
+In another terminal run:
 
 ```bash
-tetris-tracker --db ./tetris.db --host 127.0.0.1 --port 55355 nes-retroarch
+tetris-tracker-web \
+    --host 0.0.0.0 \
+    --port 8080 \
+    --db ~/tetris-tracker/tetris.db
 ```
 
-List installed collectors:
+On the Raspberry Pi itself the dashboard is available at:
+
+```text
+http://127.0.0.1:8080
+```
+
+From another device on the same network, use the Raspberry Pi's IP address:
+
+```text
+http://<RETROPIE-IP>:8080
+```
+
+For example:
+
+```text
+http://192.168.1.100:8080
+```
+
+## Start automatically with RetroPie
+
+Once everything works manually, both the tracker and the web dashboard can be started automatically with RetroPie.
+
+Edit:
 
 ```bash
-tetris-tracker --list-collectors
+nano /opt/retropie/configs/all/autostart.sh
 ```
 
-## Plugin collectors
+Add the tracker before the normal EmulationStation startup:
 
-Third-party packages register a collector using Python entry points:
-
-```toml
-[project.entry-points."tetris_tracker.collectors"]
-my-collector = "my_package.collector:MyCollector"
+```bash
+$HOME/.local/bin/tetris-tracker \
+    --db "$HOME/tetris-tracker/tetris.db" \
+    --host 127.0.0.1 \
+    --port 55355 \
+    nes-retroarch \
+    >> "$HOME/tetris-tracker/tracker.log" 2>&1 &
 ```
 
-A collector class implements:
+Start the web dashboard as a second background process:
+
+```bash
+$HOME/.local/bin/tetris-tracker-web \
+    --host 0.0.0.0 \
+    --port 8080 \
+    --db "$HOME/tetris-tracker/tetris.db" \
+    >> "$HOME/tetris-tracker/web.log" 2>&1 &
+```
+
+Keep the existing EmulationStation command as the final command in `autostart.sh`.
+
+A typical configuration therefore looks like:
+
+```bash
+#!/bin/bash
+
+$HOME/.local/bin/tetris-tracker \
+    --db "$HOME/tetris-tracker/tetris.db" \
+    --host 127.0.0.1 \
+    --port 55355 \
+    nes-retroarch \
+    >> "$HOME/tetris-tracker/tracker.log" 2>&1 &
+
+$HOME/.local/bin/tetris-tracker-web \
+    --host 0.0.0.0 \
+    --port 8080 \
+    --db "$HOME/tetris-tracker/tetris.db" \
+    >> "$HOME/tetris-tracker/web.log" 2>&1 &
+
+emulationstation
+```
+
+After rebooting the Raspberry Pi, Tetris Tracker and its web dashboard should start automatically in the background.
+
+## Updating
+
+The repository already includes an `update.sh` script. To update Tetris Tracker, simply run:
+
+```bash
+cd ~/tetris-tracker
+./update.sh
+```
+
+The script pulls the latest version and installs the updated package.
+
+## Supported NES Tetris ROMs
+
+The NES RetroArch collector deliberately only reads emulator memory when a
+known Tetris ROM is running.
+
+This prevents the tracker from interpreting arbitrary NES memory as Tetris
+data when another game is loaded.
+
+The currently supported ROMs are identified by their CRC32 checksum.
+
+If a supported ROM is detected, RetroArch shows a message similar to:
+
+```text
+New game with CRC32 C99B0FCA inserted. Version pal detected.
+```
+
+For an unknown ROM, the tracker reports:
+
+```text
+New game with CRC32 XXXXXXXX inserted. Unsupported Tetris variant.
+```
+
+The same information is also printed to the tracker console:
+
+```text
+[rom] New game with CRC32 XXXXXXXX inserted. Unsupported Tetris variant.
+```
+
+When an unsupported ROM is detected, the collector returns no game state and
+does **not** access emulator memory.
+
+### My Tetris ROM is not recognized
+
+Different legitimate releases or ROM dumps can have different CRC32
+checksums.
+
+If you are using Nintendo NES Tetris and the tracker reports:
+
+```text
+Unsupported Tetris variant.
+```
+
+look at the CRC32 shown in the message.
+
+For example:
+
+```text
+New game with CRC32 ABCD1234 inserted. Unsupported Tetris variant.
+```
+
+Open:
+
+```text
+src/tetris_tracker/collectors/nes_retroarch.py
+```
+
+and find:
 
 ```python
-class MyCollector:
-    name = "my-collector"
-
-    def __init__(self, config):
-        ...
-
-    def read_state(self):
-        ...
+KNOWN_TETRIS_ROMS = {
+    "C99B0FCA": "pal",
+    "D16EA396": "ntsc",
+    "6D72C53A": "ntsc",
+}
 ```
 
-`read_state()` returns either `None` (source unavailable) or a
-`tetris_tracker.models.GameState`.
+Add your ROM checksum with the correct version:
 
-The tracker core owns session detection, event generation and SQLite writes.
-Collectors should only translate their source into normalized game state.
+```python
+KNOWN_TETRIS_ROMS = {
+    "C99B0FCA": "pal",
+    "D16EA396": "ntsc",
+    "6D72C53A": "ntsc",
+    "ABCD1234": "ntsc",
+}
+```
 
-## Built-in NES RetroArch collector
+Use:
 
-Current RAM addresses are for Nintendo NES Tetris:
+```text
+"pal"
+```
 
-- level: `0x0044`
-- phase: `0x0048`
-- lines: `0x0050..0x0051`
-- score: `0x0053..0x0055`
-- lines currently being cleared: `0x0056`
-- current piece: `0x0042`
-- next piece: `0x00BF`
-- board: `0x0400..0x04C7`
+for the PAL version and:
 
-The collector polls RetroArch using `READ_CORE_MEMORY`.
+```text
+"ntsc"
+```
 
+for the NTSC version.
 
-## RetroArch OSD notifications
+Then reinstall Tetris Tracker:
 
-The built-in `nes-retroarch` collector uses RetroArch `SHOW_MSG` for lightweight feedback:
+```bash
+cd ~/tetris-tracker
+python3 -m pip install --user .
+```
 
-- on game start: `Tetris Tracker: Tracking started`
-- after a successful database commit: `Tetris Tracker: Run saved - ... pts`
-- after a new personal best: `Tetris Tracker: NEW PB! ... pts`
+or, if you are using the repository update script:
 
-Notifications are best-effort. A notification failure never interrupts tracking.
+```bash
+./update.sh
+```
 
+Restart the tracker afterwards.
 
-## Replay-ready database schema
+### Important
 
-Version 0.3 adds the `piece_states` table for future board replay support.
-The current NES RetroArch collector does **not** write piece snapshots yet.
+Only add a CRC32 if you know that the ROM is a compatible Nintendo NES
+Tetris version.
 
-Each future snapshot can store:
+The tracker relies on specific NES Tetris RAM addresses. Adding the checksum
+of an unrelated or incompatible ROM may cause incorrect game data to be
+interpreted as Tetris state.
 
-- `run_id`
-- sequential `piece_index`
-- timestamp
-- current / next piece
-- score, lines, level
-- compact board state as a SQLite `BLOB`
+If you encounter another compatible NES Tetris release, please consider
+opening an issue or pull request with its CRC32 and region so it can be added
+to the supported ROM list.
 
-This keeps replay data separate from high-level `events` and allows the
-collector to add board snapshots later without changing the run schema.
+## Other RetroArch systems
 
+RetroPie is the easiest reference setup, but Tetris Tracker is not tied to RetroPie or Raspberry Pi.
 
-## Efficient NES RetroArch polling
+It can also run on other Linux-based systems and handhelds where RetroArch is available, as long as:
 
-Version 0.4 reduces RetroArch memory requests substantially.
+- RetroArch Network Commands can be enabled
+- the tracker can reach RetroArch's Network Command port
+- Python can run on the device itself or on another machine on the network
 
-Instead of reading each value with an individual `READ_CORE_MEMORY` request,
-the NES collector now reads one compact block from `0x0042` through `0x0056`
-and extracts these values locally:
+This makes the same approach suitable for other RetroArch-based setups, including compatible retro handhelds and small Linux systems.
 
-- current piece
-- level
-- game phase
-- lines
-- score
-- lines currently being cleared
-
-Only `next_piece` at `0x00BF` requires a second small memory read.
-
-At the default 50 ms polling interval this reduces the collector from roughly
-7 memory reads per poll to 2 memory reads per poll, while also making the
-main gameplay values come from the same emulator snapshot.
-
-
-## v0.5 gameplay detection fixes
-
-- Restores `Storage.finish_run()`.
-- Adds a `runs.status` column (`active`, `completed`, future `interrupted`).
-- Does not create a run merely because the Tetris ROM/menu is open.
-- Requires three consecutive gameplay samples before `game_start`.
-- Ignores line-clear counters before a run is active.
-- Prevents menu/initialization RAM values from becoming fake clear events.
-- Keeps the final RAM score, including soft-drop points, when completing a run.
-
-
-## v0.6 run state-machine fix
-
-- Keeps the improved real-game start detection from v0.5.
-- Separates start detection from end detection.
-- Transient phase changes and line-clear animations no longer end a run.
-- A run only ends after the collector reports a persistent top-out state.
-- NES RetroArch currently confirms top-out using phase `10`, observed for
-  several consecutive polls.
-
-
-## v0.7 reliable line-clear detection
-
-Line clears are now classified from the persistent `lines` counter instead of
-the transient NES `clear_count` byte.
-
-Examples:
-
-- `lines +1` -> single
-- `lines +2` -> double
-- `lines +3` -> triple
-- `lines +4` -> tetris
-
-The raw `clear_count` value is still stored in the event `payload_json` for
-debugging, but it no longer determines statistics.
-
-
-## v0.8 player-ready database
-
-- Adds a `players` table and `runs.player_id`.
-- Creates temporary default player `Lukas`.
-- Existing runs without a player are assigned to `Lukas` automatically.
-- New runs are assigned to `Lukas`.
-- Personal-best calculation is scoped to the player.
-- Player selection/menu comes later.
-
-
-## v0.8 database behavior
-
-Version 0.8 does not migrate older schemas.
-
-If the configured SQLite database does not already contain the v0.8
-player-aware schema, the tracker:
-
-1. renames the old database to `*.pre-0.8-YYYYMMDD-HHMMSS.bak`
-2. creates a fresh database
-3. creates the default player `Lukas`
-4. records all new runs against that player
-
-A valid existing v0.8 database is reused unchanged.
+The currently built-in collector targets Nintendo NES Tetris. Support for additional games and platforms can be added through collectors.

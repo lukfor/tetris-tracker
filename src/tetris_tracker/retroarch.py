@@ -22,7 +22,7 @@ class RetroArchClient:
                 data, _ = sock.recvfrom(4096)
             except socket.timeout as exc:
                 raise ConnectionError(
-                    f"Keine Antwort von RetroArch auf {self.host}:{self.port}"
+                    f"No response from RetroArch at {self.host}:{self.port}"
                 ) from exc
 
         return data.decode("ascii").strip()
@@ -33,15 +33,15 @@ class RetroArchClient:
         )
 
         if response is None:
-            raise RuntimeError("Leere RetroArch-Antwort")
+            raise RuntimeError("Empty RetroArch response")
 
         parts = response.split()
 
         if len(parts) < 3:
-            raise RuntimeError(f"Unerwartete RetroArch-Antwort: {response}")
+            raise RuntimeError(f"Unexpected RetroArch response: {response}")
 
         if parts[2] == "-1":
-            raise RuntimeError(f"RetroArch Memory Read fehlgeschlagen: {response}")
+            raise RuntimeError(f"RetroArch memory read failed: {response}")
 
         return [int(value, 16) for value in parts[2:]]
 

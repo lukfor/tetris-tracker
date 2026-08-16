@@ -116,19 +116,19 @@ class NesRetroArchCollector:
         self._crc32 = crc32
         self._version = KNOWN_TETRIS_ROMS.get(crc32)
 
-        # Nur melden, wenn tatsächlich ein anderes Spiel / ROM erkannt wurde.
+        # Only report if a different game / ROM was actually detected.
         if crc32 != self._last_reported_crc32:
             self._last_reported_crc32 = crc32
 
             if self._version is not None:
                 message = (
-                    f"Neues Spiel mit CRC32 {crc32} eingelegt. "
-                    f"Version {self._version} erkannt."
+                    f"New game with CRC32 {crc32} inserted. "
+                    f"Version {self._version} detected."
                 )
             else:
                 message = (
-                    f"Neues Spiel mit CRC32 {crc32} eingelegt. "
-                    f"Keine unterstützte Tetris-Variante."
+                    f"New game with CRC32 {crc32} inserted. "
+                    f"Unsupported Tetris variant."
                 )
 
             print(f"[rom] {message}")

@@ -67,15 +67,15 @@ def main() -> None:
         return
 
     if not args.collector:
-        parser.error("collector-name fehlt; nutze --list-collectors")
+        parser.error("collector name missing; use --list-collectors")
 
     collector_cls = collectors.get(args.collector)
 
     if collector_cls is None:
-        available = ", ".join(sorted(collectors)) or "(keine)"
+        available = ", ".join(sorted(collectors)) or "(none)"
         parser.error(
-            f"Unbekannter Collector '{args.collector}'. "
-            f"Verfügbar: {available}"
+            f"Unknown collector '{args.collector}'. "
+            f"Available: {available}"
         )
 
     config = CollectorConfig(
@@ -98,4 +98,4 @@ def main() -> None:
     try:
         tracker.run_forever()
     except KeyboardInterrupt:
-        print("\nBeendet.", file=sys.stderr)
+        print("\nExited.", file=sys.stderr)

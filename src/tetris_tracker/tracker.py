@@ -246,7 +246,7 @@ class Tracker:
         self.last_state = state
 
     def run_forever(self) -> None:
-        self.log("tetris-tracker started, press Ctrl+C to stop")
+        self.log("monitor started, press Ctrl+C to stop")
 
         while True:
             state = self.collector.read_state()

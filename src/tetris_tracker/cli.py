@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from tetris_tracker import __version__
 from tetris_tracker.plugin import CollectorConfig, discover_collectors
 from tetris_tracker.storage import Storage
 from tetris_tracker.tracker import Tracker
@@ -47,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="List installed collector plugins and exit",
     )
     parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show version and exit",
+    )
+    parser.add_argument(
         "collector",
         nargs="?",
         help="Collector plugin name, e.g. nes-retroarch",
@@ -59,6 +66,7 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
+    print(f"tetris-tracker {__version__}")
     collectors = discover_collectors()
 
     if args.list_collectors:
